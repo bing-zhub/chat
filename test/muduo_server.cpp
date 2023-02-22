@@ -30,17 +30,15 @@ using namespace muduo::net;
 class ChatServer {
  public:
   // 事件循环; IP+端口; 服务器名称
-  ChatServer(EventLoop* loop, const InetAddress& listenAddr,
-             const string& nameArg)
-      : _server(loop, listenAddr, nameArg), _loop(loop) {
+  ChatServer(EventLoop* loop, const InetAddress& listenAddr, const string& nameArg)
+    : _server(loop, listenAddr, nameArg), _loop(loop) {
     // 给服务器注册用户连接的创建和断开回调
     _server.setConnectionCallback(
-        std::bind(&ChatServer::onConnection, this, std::placeholders::_1));
+        bind(&ChatServer::onConnection, this, placeholders::_1));
 
     // 读写回调
     _server.setMessageCallback(
-        std::bind(&ChatServer::onMessage, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3));
+        bind(&ChatServer::onMessage, this, placeholders::_1, placeholders::_2, placeholders::_3));
 
     // 设置服务器端的线程数量
     _server.setThreadNum(4);  // 1个IO 3个Worker
@@ -53,9 +51,9 @@ class ChatServer {
   // 处理用户的链接创建和断开
   void onConnection(const TcpConnectionPtr& conn) {
     if(conn->connected()) {
-      std::cout << conn->peerAddress().toIpPort() << "->" << conn->localAddress().toIpPort() << " state: online" << std::endl;
+      cout << conn->peerAddress().toIpPort() << "->" << conn->localAddress().toIpPort() << " state: online" << endl;
     } else {
-      std::cout << conn->peerAddress().toIpPort() << "->" << conn->localAddress().toIpPort() << " state: offline" << std::endl;
+      cout << conn->peerAddress().toIpPort() << "->" << conn->localAddress().toIpPort() << " state: offline" << endl;
       conn->shutdown(); // close(fd);
     }
   }
@@ -65,7 +63,7 @@ class ChatServer {
                  Buffer* buf,                   // 缓冲区
                  Timestamp time) {              // 时间信息
     string str = buf->retrieveAllAsString();
-    std::cout << "RX [" << time.toFormattedString() << "]:" <<  str << std::endl;
+    cout << "RX [" << time.toFormattedString() << "]:" <<  str << endl;
     conn->send(str);
   }
   TcpServer _server;
