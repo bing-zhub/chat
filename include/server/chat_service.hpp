@@ -29,6 +29,8 @@ public:
     void login(const TcpConnectionPtr &conn, json &js, Timestamp time);
     // 注册
     void reg(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    // 一对一聊天
+    void oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time);
     // 获取消息对应的处理器
     MsgHandler getHandler(int msg_id);
 

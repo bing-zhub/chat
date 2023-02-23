@@ -6,6 +6,7 @@ ChatService::ChatService() {
     using namespace std::placeholders;
     _handlerMap.insert({LOGIN_MSG, bind(&ChatService::login, this, _1, _2, _3)});
     _handlerMap.insert({REG_MSG, bind(&ChatService::reg, this, _1, _2, _3)});
+    _handlerMap.insert({ONE_CHAT_MSG, bind(&ChatService::oneChat, this, _1, _2, _3)});
 }
 
 ChatService* ChatService::getInstance() {
@@ -132,4 +133,35 @@ void ChatService::reg(const TcpConnectionPtr &conn, json &js, Timestamp time) {
         conn->send(resp.dump());
     }
     
+}
+
+// 一对一聊天
+void ChatService::oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    json resp;
+    resp["msg_id"] = ONE_CHAT_MSG_ACK;
+    TcpConnectionPtr toConn = NULL;
+    try {
+        int toId = js["to_id"].get<int>();
+        {
+            lock_guard<mutex> lock(_connMutex);
+            if(_userConnMap.count(toId) > 0) {
+                toConn = _userConnMap[toId];
+            }
+        }
+        if(!toConn) {
+            // 存储离线消息表
+            resp["errno"] = 0;
+            resp["messgae"] = "USER OFFLINE OR NOT EXIST";
+            conn->send(resp.dump());
+            return ;
+        }
+        toConn->send(js.dump());
+        resp["errno"] = 0;
+        resp["errmsg"] = "OK";
+        conn->send(resp.dump());
+    } catch (json::exception& e) {
+        resp["errno"] = -500;
+        resp["errmsg"] = e.what();
+        conn->send(resp.dump());
+    }
 }
