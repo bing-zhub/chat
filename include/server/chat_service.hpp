@@ -9,6 +9,7 @@
 
 #include "json.hpp"
 #include "public.hpp"
+#include "user_model.hpp"
 
 using namespace std;
 using namespace muduo;
@@ -34,6 +35,9 @@ private:
 
     // 存储消息id和handler对应关系
     unordered_map<int, MsgHandler> _handlerMap;
+    
+    // 数据操作类
+    UserModel _userModel;
 };
 
 #endif

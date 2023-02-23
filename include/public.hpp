@@ -7,7 +7,8 @@
 
 enum EnMsgType {
     LOGIN_MSG = 1, // 登录
-    REG_MSG // 注册
+    REG_MSG, // 注册
+    REG_MSG_ACK // 注册响应消息
 };
 
 #endif

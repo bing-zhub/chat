@@ -24,10 +24,10 @@ void ChatServer::start() { _server.start(); }
 // 用户连接相关回调
 void ChatServer::onConnection(const TcpConnectionPtr& conn) {
     if(conn->connected()) {
-        LOG_INFO << "[Connected] \t" << conn->peerAddress().toIpPort() << " ---> " << conn->localAddress().toIpPort();
+        LOG_INFO << "[Network] Connected: " << conn->peerAddress().toIpPort() << " ---> " << conn->localAddress().toIpPort();
     } else {
         // 客户端断开连接
-        LOG_INFO << "[Disconnected] \t" << conn->peerAddress().toIpPort() << " -x-> " << conn->localAddress().toIpPort();
+        LOG_INFO << "[Network] Disconnected: " << conn->peerAddress().toIpPort() << " -x-> " << conn->localAddress().toIpPort();
         conn->shutdown();
     }
 }
@@ -35,10 +35,9 @@ void ChatServer::onConnection(const TcpConnectionPtr& conn) {
 // 读写事件相关回调
 void  ChatServer::onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp time) {
     string data = buffer->retrieveAllAsString();
-    LOG_INFO << "[RX] " << time.toFormattedString() << ": " << data;
     json js = json::parse(data);
-    // 解耦网络模块代码与业务模块代码
 
+    // 解耦网络模块代码与业务模块代码
     auto handler = ChatService::getInstance()->getHandler(js["msg_id"].get<int>());
     handler(conn, js, time);
 }
