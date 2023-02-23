@@ -28,6 +28,7 @@ void ChatServer::onConnection(const TcpConnectionPtr& conn) {
     } else {
         // 客户端断开连接
         LOG_INFO << "[Network] Disconnected: " << conn->peerAddress().toIpPort() << " -x-> " << conn->localAddress().toIpPort();
+        ChatService::getInstance()->clientCloseException(conn);
         conn->shutdown();
     }
 }

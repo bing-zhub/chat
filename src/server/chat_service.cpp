@@ -26,6 +26,26 @@ MsgHandler ChatService::getHandler(int msg_id) {
     return _handlerMap[msg_id];
 }
 
+// 客户端异常退出
+void ChatService::clientCloseException(const TcpConnectionPtr& conn) {
+    int id = -1;
+    {
+        lock_guard<mutex> lock(_connMutex);
+        for(const auto& [k, v] : _userConnMap) {
+            if(v == conn) {
+                id = k;
+                break;
+            }
+        }
+        _userConnMap.erase(id);
+    }
+    if(id == -1) return ;
+    // 退出登录, 设置为离线
+    User user = _userModel.query(id);
+    user.setState("offline");
+    _userModel.update(user);
+}
+
 // 登录
 void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) {
     
@@ -60,7 +80,11 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) 
 
         user.setState("online");
         _userModel.update(user);
-
+        // 登录成功记录用户连接信息
+        {
+            lock_guard<mutex> lock(_connMutex); // 此作用域加锁
+            _userConnMap.insert({user.getId(), conn});
+        }
 
         resp["errmsg"] = "OK"; 
         resp["errno"] = 0;

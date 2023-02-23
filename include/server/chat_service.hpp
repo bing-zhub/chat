@@ -6,6 +6,7 @@
 #include <functional>
 #include <muduo/base/Logging.h>
 #include <string>
+#include <mutex>
 
 #include "json.hpp"
 #include "public.hpp"
@@ -30,6 +31,8 @@ public:
     void reg(const TcpConnectionPtr &conn, json &js, Timestamp time);
     // 获取消息对应的处理器
     MsgHandler getHandler(int msg_id);
+
+    void clientCloseException(const TcpConnectionPtr& conn);
 private:
     ChatService();
 
@@ -38,6 +41,12 @@ private:
     
     // 数据操作类
     UserModel _userModel;
+
+    // 定义互斥锁, 保证_userConnMap的安全
+    mutex _connMutex;
+
+    // 存储在线用户的通讯连接
+    unordered_map<int, TcpConnectionPtr> _userConnMap; 
 };
 
 #endif
