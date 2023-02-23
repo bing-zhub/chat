@@ -27,6 +27,11 @@ MsgHandler ChatService::getHandler(int msg_id) {
     return _handlerMap[msg_id];
 }
 
+// 服务端异常退出
+void ChatService::resetState() {
+    _userModel.resetState();
+}
+
 // 客户端异常退出
 void ChatService::clientCloseException(const TcpConnectionPtr& conn) {
     int id = -1;

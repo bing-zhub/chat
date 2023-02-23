@@ -34,7 +34,9 @@ public:
     void oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time);
     // 获取消息对应的处理器
     MsgHandler getHandler(int msg_id);
-
+    // 服务端异常退出
+    void resetState();
+    // 客户端异常退出
     void clientCloseException(const TcpConnectionPtr& conn);
 private:
     ChatService();

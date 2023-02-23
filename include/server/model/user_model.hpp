@@ -12,6 +12,8 @@ public:
     User query(int id);
     // 更新用户
     bool update(User& user);
+    // 重置用户状态
+    bool resetState();
 };
 
 #endif
