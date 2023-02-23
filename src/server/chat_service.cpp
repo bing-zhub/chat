@@ -88,11 +88,15 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) 
         }
 
         resp["errmsg"] = "OK"; 
-        resp["errno"] = 0;
+        resp["errno"] = 0; 
         resp["id"] = user.getId();
         resp["name"] = user.getName();
         resp["state"] = user.getState();
 
+        // 查询用户是否有离线信息, 如果有的话发送回去
+        resp["offline_msgs"] = _offlineMsgModel.query(user.getId());
+        _offlineMsgModel.remove(user.getId());
+        
         conn->send(resp.dump());
     } catch (json::exception& e) {
         resp["errno"] = -500;
@@ -151,8 +155,9 @@ void ChatService::oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time
         if(!toConn) {
             // 存储离线消息表
             resp["errno"] = 0;
-            resp["messgae"] = "USER OFFLINE OR NOT EXIST";
+            resp["messgae"] = "USER IS OFFLINE, BUT SAVED";
             conn->send(resp.dump());
+            _offlineMsgModel.insert(toId, js.dump());
             return ;
         }
         toConn->send(js.dump());

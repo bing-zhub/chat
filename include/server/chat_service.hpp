@@ -11,6 +11,7 @@
 #include "json.hpp"
 #include "public.hpp"
 #include "user_model.hpp"
+#include "offline_msg_model.hpp"
 
 using namespace std;
 using namespace muduo;
@@ -48,7 +49,10 @@ private:
     mutex _connMutex;
 
     // 存储在线用户的通讯连接
-    unordered_map<int, TcpConnectionPtr> _userConnMap; 
+    unordered_map<int, TcpConnectionPtr> _userConnMap;
+
+    // 离线消息操作类
+    OfflineMsgModel _offlineMsgModel; 
 };
 
 #endif
