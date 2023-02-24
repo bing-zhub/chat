@@ -68,3 +68,38 @@ bool UserModel::resetState() {
 
     return mysql.update(sql);
 }
+
+bool UserModel::addFriend(int userId, int friendId) {
+    // 组装sql语句
+    char sql[1024] = { 0 };
+    sprintf(sql, "insert into friend(userid, friendid) select distinct %d,%d from user where id in (select id from user where id=%d or id = %d);", userId, friendId, userId, friendId);
+
+    MySQL mysql;
+    if(!mysql.connect()) return false;
+
+    return mysql.update(sql);
+}
+
+vector<User> UserModel::viewFriendList(int userId) {
+     // 组装sql语句
+    char sql[1024] = { 0 };
+    sprintf(sql, "select id, name, state from `user` where id in (select friendid from friend where userid = %d);", userId);
+
+    MySQL mysql;
+    if(!mysql.connect()) return {};
+
+    MYSQL_RES *res = mysql.query(sql);
+    
+    if(!res) return {};
+
+    vector<User> vec;
+
+    MYSQL_ROW row;
+    
+    while((row = mysql_fetch_row(res)) != NULL) {
+        vec.push_back(User(atoi(row[0]), row[1], "", row[2]));
+    }
+
+    mysql_free_result(res);
+    return vec;
+}

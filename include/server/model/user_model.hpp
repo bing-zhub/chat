@@ -1,6 +1,8 @@
 #ifndef USER_MODEL_H
 #define USER_MODEL_H
 
+#include <vector>
+
 #include "user.hpp"
 
 // User数据操作类
@@ -14,6 +16,10 @@ public:
     bool update(User& user);
     // 重置用户状态
     bool resetState();
+    // 添加好友
+    bool addFriend(int userId, int friendId);
+    // 查看好友列表
+    vector<User> viewFriendList(int userId);
 };
 
 #endif

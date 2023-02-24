@@ -7,6 +7,8 @@ ChatService::ChatService() {
     _handlerMap.insert({LOGIN_MSG, bind(&ChatService::login, this, _1, _2, _3)});
     _handlerMap.insert({REG_MSG, bind(&ChatService::reg, this, _1, _2, _3)});
     _handlerMap.insert({ONE_CHAT_MSG, bind(&ChatService::oneChat, this, _1, _2, _3)});
+    _handlerMap.insert({ADD_FRIEND_MSG, bind(&ChatService::addFriend, this, _1, _2, _3)});
+    _handlerMap.insert({VIEW_FRIEND_LIST, bind(&ChatService::viewFriendList, this, _1, _2, _3)});
 }
 
 ChatService* ChatService::getInstance() {
@@ -102,6 +104,16 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) 
         resp["offline_msgs"] = _offlineMsgModel.query(user.getId());
         _offlineMsgModel.remove(user.getId());
         
+        // 查询用户的好友列表， 并返回
+        auto friends = _userModel.viewFriendList(user.getId());
+        
+        resp["friends"] = json::array();
+
+        for(User& u : friends) {
+            auto user = json::object({ { u.getName(), json::object({ {"id", u.getId()}, {"state",  u.getState()} })} });
+            resp["friends"].push_back(user);
+        }
+
         conn->send(resp.dump());
     } catch (json::exception& e) {
         resp["errno"] = -500;
@@ -174,4 +186,45 @@ void ChatService::oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time
         resp["errmsg"] = e.what();
         conn->send(resp.dump());
     }
+}
+
+void ChatService::addFriend(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    json resp;
+    resp["msg_id"] = ADD_FRIEND_MSG_ACK;
+    try {
+        int friendId = js["friend_id"].get<int>();
+        int userId = js["user_id"].get<int>();
+        bool res = _userModel.addFriend(userId, friendId);
+        if(res) {
+            resp["errmsg"] = "OK";
+        } else {
+            resp["errmsg"] = "CANNOT ADD FRIEND";
+        }
+    } catch (json::exception& e) {
+        resp["errno"] = -500;
+        resp["errmsg"] = e.what();
+    }
+    conn->send(resp.dump());
+}
+
+void ChatService::viewFriendList(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    json resp;
+    resp["msg_id"] = VIEW_FRIEND_LIST_ACK;
+    try {
+        int userId = js["user_id"].get<int>();
+        resp["errmsg"] = "OK";
+        // 查询用户的好友列表， 并返回
+        auto friends = _userModel.viewFriendList(userId);
+        
+        resp["friends"] = json::array();
+
+        for(User& u : friends) {
+            auto user = json::object({ { u.getName(), json::object({ {"id", u.getId()}, {"state",  u.getState()} })} });
+            resp["friends"].push_back(user);
+        }
+    } catch (json::exception& e) {
+        resp["errno"] = -500;
+        resp["errmsg"] = e.what();
+    }
+    conn->send(resp.dump());
 }
