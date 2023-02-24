@@ -9,6 +9,9 @@ ChatService::ChatService() {
     _handlerMap.insert({ONE_CHAT_MSG, bind(&ChatService::oneChat, this, _1, _2, _3)});
     _handlerMap.insert({ADD_FRIEND_MSG, bind(&ChatService::addFriend, this, _1, _2, _3)});
     _handlerMap.insert({VIEW_FRIEND_LIST, bind(&ChatService::viewFriendList, this, _1, _2, _3)});
+    _handlerMap.insert({CREATE_GROUP_MSG, bind(&ChatService::createGroup, this, _1, _2, _3)});
+    _handlerMap.insert({JOIN_GROUP_MSG, bind(&ChatService::joinGroup, this, _1, _2, _3)});
+    _handlerMap.insert({GROUP_CHAT_MSG, bind(&ChatService::groupChat, this, _1, _2, _3)});
 }
 
 ChatService* ChatService::getInstance() {
@@ -223,6 +226,85 @@ void ChatService::viewFriendList(const TcpConnectionPtr &conn, json &js, Timesta
             resp["friends"].push_back(user);
         }
     } catch (json::exception& e) {
+        resp["errno"] = -500;
+        resp["errmsg"] = e.what();
+    }
+    conn->send(resp.dump());
+}
+
+// 创建群组
+void ChatService::createGroup(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    json resp;
+    resp["msg_id"] = CREATE_GROUP_MSG_ACK;
+    try {
+        int userId = js["id"].get<int>();
+        string groupName = js["group_name"];
+        string desc = js["desc"];
+
+        Group group(-1, groupName, desc);
+        
+        bool res = _groupModel.createGroup(group);
+
+        if(res && _groupModel.joinGroup(userId, group.getId(), "creator")) {
+            resp["group_id"] = group.getId();
+            resp["errmsg"] = "OK";
+        } else {
+            resp["errmsg"] = "CANNOT CREATE GROUP";
+        }
+    } catch (json::exception& e) {
+        resp["errno"] = -500;
+        resp["errmsg"] = e.what();
+    }
+    conn->send(resp.dump());
+}
+
+// 加入群组
+void ChatService::joinGroup(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    json resp;
+    resp["msg_id"] = JOIN_GROUP_MSG_ACK;
+    try {
+        int userId = js["id"].get<int>();
+        int groupId = js["group_id"].get<int>();
+        bool res = _groupModel.joinGroup(userId, groupId, "normal");
+        if(res) {
+            resp["errno"] = 0;
+            resp["errmsg"] = "OK";
+        } else {
+            resp["error"] = -500;
+            resp["errmsg"] = "CANNOT JOIN GROUP";
+        }
+    }  catch (json::exception& e) {
+        resp["errno"] = -500;
+        resp["errmsg"] = e.what();
+    }
+    conn->send(resp.dump());
+}
+
+// 群聊
+void ChatService::groupChat(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    json resp;
+    resp["msg_id"] = JOIN_GROUP_MSG_ACK;
+    try {
+        int userId = js["id"].get<int>();
+        int groupId = js["group_id"].get<int>();
+        vector<int> userIdVec = _groupModel.queryGroupUsers(userId, groupId);
+        for(int id : userIdVec) {
+            TcpConnectionPtr client_conn = NULL;
+            {
+                lock_guard<mutex> lock(_connMutex);
+                if(_userConnMap.count(id)) {
+                    client_conn = _userConnMap[id];
+                }
+            }
+            if(client_conn) {
+                client_conn->send(js.dump());
+            } else {
+                _offlineMsgModel.insert(id, js.dump());
+            }
+        }
+        resp["errno"] = 0;
+        resp["errmsg"] = "OK";
+    }  catch (json::exception& e) {
         resp["errno"] = -500;
         resp["errmsg"] = e.what();
     }

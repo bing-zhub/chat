@@ -39,6 +39,10 @@ void  ChatServer::onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timest
     json js = json::parse(data);
 
     // 解耦网络模块代码与业务模块代码
-    auto handler = ChatService::getInstance()->getHandler(js["msg_id"].get<int>());
-    handler(conn, js, time);
+    try {
+        auto handler = ChatService::getInstance()->getHandler(js["msg_id"].get<int>());
+        handler(conn, js, time);
+    } catch (json::exception& e) {
+        LOG_ERROR << e.what();
+    }
 }

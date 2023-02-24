@@ -12,6 +12,7 @@
 #include "public.hpp"
 #include "user_model.hpp"
 #include "offline_msg_model.hpp"
+#include "group_model.hpp"
 
 using namespace std;
 using namespace muduo;
@@ -36,6 +37,12 @@ public:
     void addFriend(const TcpConnectionPtr &conn, json &js, Timestamp time);
     // 查看好友列表
     void viewFriendList(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    // 创建群组
+    void createGroup(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    // 加入群组
+    void joinGroup(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    // 群聊
+    void groupChat(const TcpConnectionPtr &conn, json &js, Timestamp time);
     // 获取消息对应的处理器
     MsgHandler getHandler(int msg_id);
     // 服务端异常退出
@@ -58,7 +65,10 @@ private:
     unordered_map<int, TcpConnectionPtr> _userConnMap;
 
     // 离线消息操作类
-    OfflineMsgModel _offlineMsgModel; 
+    OfflineMsgModel _offlineMsgModel;
+
+    // 群组操作类
+    GroupModel _groupModel;
 };
 
 #endif

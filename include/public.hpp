@@ -15,7 +15,13 @@ enum EnMsgType {
     ADD_FRIEND_MSG, // 添加好友信息
     ADD_FRIEND_MSG_ACK, // 添加好友信息回复
     VIEW_FRIEND_LIST, // 查看好友列表
-    VIEW_FRIEND_LIST_ACK  // 查看好友列表响应
+    VIEW_FRIEND_LIST_ACK,  // 查看好友列表响应
+    CREATE_GROUP_MSG, // 创建群组
+    CREATE_GROUP_MSG_ACK,
+    JOIN_GROUP_MSG, // 加入群组
+    JOIN_GROUP_MSG_ACK,
+    GROUP_CHAT_MSG, // 群聊天 
+    GROUP_CHAT_MSG_ACK
 };
 
 #endif
