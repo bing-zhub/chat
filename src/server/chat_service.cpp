@@ -13,6 +13,24 @@ ChatService::ChatService() {
     _handlerMap.insert({CREATE_GROUP_MSG, bind(&ChatService::createGroup, this, _1, _2, _3)});
     _handlerMap.insert({JOIN_GROUP_MSG, bind(&ChatService::joinGroup, this, _1, _2, _3)});
     _handlerMap.insert({GROUP_CHAT_MSG, bind(&ChatService::groupChat, this, _1, _2, _3)});
+
+    if(_redis.connect()) {
+        _redis.initNotifyHandler(bind(&ChatService::handleRedisSubscribeMsg, this, _1, _2));
+    }
+}
+
+void ChatService::handleRedisSubscribeMsg(int userId, string msg) {
+    LOG_INFO << "handleRedisSubscribeMsg " << userId << " " << msg;
+    json resp;
+    resp["msg_id"] = ONE_CHAT_MSG_ACK;
+    TcpConnectionPtr conn = NULL;
+    {
+        lock_guard<mutex> lock(_connMutex);
+        if(_userConnMap.count(userId) > 0) {
+            conn = _userConnMap[userId];
+        }
+    }
+    conn->send(msg);
 }
 
 ChatService* ChatService::getInstance() {
@@ -55,6 +73,7 @@ void ChatService::clientCloseException(const TcpConnectionPtr& conn) {
     }
     if(id == -1) return ;
     // 退出登录, 设置为离线
+    _redis.unsubscribe(id);
     User user = _userModel.query(id);
     user.setState("offline");
     _userModel.update(user);
@@ -100,6 +119,8 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) 
             _userConnMap.insert({user.getId(), conn});
         }
 
+        _redis.subscribe(user.getId());
+
         resp["errmsg"] = "OK"; 
         resp["errno"] = 0; 
         resp["id"] = user.getId();
@@ -131,6 +152,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) 
 // 登出
 void ChatService::loginOut(const TcpConnectionPtr &conn, json &js, Timestamp time) {
     User user = _userModel.query(js["id"].get<int>());
+    _redis.unsubscribe(user.getId());
     user.setState("offline");
     _userModel.update(user);
 }
@@ -183,12 +205,19 @@ void ChatService::oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time
             }
         }
         if(!toConn) {
-            // 存储离线消息表
-            resp["errno"] = 0;
-            resp["messgae"] = "USER IS OFFLINE, BUT SAVED";
-            conn->send(resp.dump());
-            _offlineMsgModel.insert(toId, js.dump());
-            return ;
+            User user = _userModel.query(toId);
+            if(user.getState() == "online") {
+                // 在其他服务器
+                _redis.publish(toId, js.dump());
+                return ;
+            } else {
+                // 存储离线消息表
+                resp["errno"] = 0;
+                resp["messgae"] = "USER IS OFFLINE, BUT SAVED";
+                conn->send(resp.dump());
+                _offlineMsgModel.insert(toId, js.dump());
+                return ;
+            }
         }
         toConn->send(js.dump());
         resp["errno"] = 0;
@@ -309,7 +338,12 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json &js, Timestamp ti
             if(client_conn) {
                 client_conn->send(js.dump());
             } else {
-                _offlineMsgModel.insert(id, js.dump());
+                User user = _userModel.query(id);
+                if(user.getState() == "online") {
+                    _redis.publish(id, js.dump());
+                } else {
+                    _offlineMsgModel.insert(id, js.dump());
+                }
             }
         }
         resp["errno"] = 0;

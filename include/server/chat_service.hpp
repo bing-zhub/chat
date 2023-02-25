@@ -13,6 +13,7 @@
 #include "user_model.hpp"
 #include "offline_msg_model.hpp"
 #include "group_model.hpp"
+#include "redis.hpp"
 
 using namespace std;
 using namespace muduo;
@@ -51,6 +52,8 @@ public:
     void resetState();
     // 客户端异常退出
     void clientCloseException(const TcpConnectionPtr& conn);
+    // 处理跨服务器通信
+    void handleRedisSubscribeMsg(int userId, string msg);
 private:
     ChatService();
 
@@ -71,6 +74,9 @@ private:
 
     // 群组操作类
     GroupModel _groupModel;
+    
+    // redis跨服务器通信
+    Redis _redis;
 };
 
 #endif
