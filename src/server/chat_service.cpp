@@ -5,6 +5,7 @@
 ChatService::ChatService() {
     using namespace std::placeholders;
     _handlerMap.insert({LOGIN_MSG, bind(&ChatService::login, this, _1, _2, _3)});
+    _handlerMap.insert({LOGIN_OUT_MSG, bind(&ChatService::loginOut, this, _1, _2, _3)});
     _handlerMap.insert({REG_MSG, bind(&ChatService::reg, this, _1, _2, _3)});
     _handlerMap.insert({ONE_CHAT_MSG, bind(&ChatService::oneChat, this, _1, _2, _3)});
     _handlerMap.insert({ADD_FRIEND_MSG, bind(&ChatService::addFriend, this, _1, _2, _3)});
@@ -123,6 +124,13 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time) 
         resp["errmsg"] = e.what();
         conn->send(resp.dump());
     }
+}
+
+// 登出
+void ChatService::loginOut(const TcpConnectionPtr &conn, json &js, Timestamp time) {
+    User user = _userModel.query(js["id"].get<int>());
+    user.setState("offline");
+    _userModel.update(user);
 }
 
 // 注册

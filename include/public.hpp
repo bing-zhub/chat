@@ -21,7 +21,8 @@ enum EnMsgType {
     JOIN_GROUP_MSG, // 加入群组
     JOIN_GROUP_MSG_ACK,
     GROUP_CHAT_MSG, // 群聊天 
-    GROUP_CHAT_MSG_ACK
+    GROUP_CHAT_MSG_ACK,
+    LOGIN_OUT_MSG
 };
 
 #endif

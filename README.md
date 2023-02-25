@@ -15,6 +15,8 @@ Muduo, JSON for Modern C++, MySQL, Redis, Nginx
 `{"msg_id":11,"id":21,"group_name":"ChicChat","desc":"xyz"}`
 - 发送群聊信息
 `{"msg_id":15,"id":21,"group_id":2,"msg":"HelloWorld"}`
+
+
 用户B
 - 登录
 `{"msg_id":1,"id":22,"name":"bing","password": "123"}`
@@ -22,10 +24,10 @@ Muduo, JSON for Modern C++, MySQL, Redis, Nginx
 `{"msg_id":5,"to_id":21,"msg":"Hello Fucking World!"}`
 - 加入群组
 `{"msg_id":13,"id":22,"group_id":2}`
+
+
 用户C
 - 登录
 `{"msg_id":1,"id":19,"name":"bi","password": "123"}`
 - 加入群组
 `{"msg_id":13,"id":19,"group_id":2}`
-
-```
