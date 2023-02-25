@@ -35,7 +35,9 @@ MsgHandler ChatService::getHandler(int msg_id) {
 
 // 服务端异常退出
 void ChatService::resetState() {
-    _userModel.resetState();
+    for(const auto& [userId, v] : _userConnMap) {
+        _userModel.resetState(userId);
+    }
 }
 
 // 客户端异常退出

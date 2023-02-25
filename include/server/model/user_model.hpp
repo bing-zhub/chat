@@ -15,7 +15,7 @@ public:
     // 更新用户
     bool update(User& user);
     // 重置用户状态
-    bool resetState();
+    bool resetState(int userId);
     // 添加好友
     bool addFriend(int userId, int friendId);
     // 查看好友列表

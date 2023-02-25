@@ -31,3 +31,13 @@ Muduo, JSON for Modern C++, MySQL, Redis, Nginx
 `{"msg_id":1,"id":19,"name":"bi","password": "123"}`
 - 加入群组
 `{"msg_id":13,"id":19,"group_id":2}`
+
+## 负载均衡器
+1. 把Client的请求按照负载算法分发到具体的业务服务器ChatServer上
+2. 能够和ChatServer保持心跳机制，检测ChatServer故障
+3. 能够发现新添加的ChatServer设备，方便拓展服务器数量
+
+选择nginx作为TCP负载均衡模块
+1. 对nginx进行原码编译，包含tcp负载均衡模块
+2. 通过nginx.conf配置负载均衡
+3. nginx平滑加载配置文件启动(不重启服务器)

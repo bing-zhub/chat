@@ -59,9 +59,10 @@ bool UserModel::update(User& user) {
     return mysql.update(sql);
 }
 
-bool UserModel::resetState() {
+bool UserModel::resetState(int userId) {
     // 组装sql语句
-    char sql[1024] = "update user set state='offline' where state='online'";
+    char sql[1024] = { 0 };
+    sprintf(sql, "update user set state='offline' where id=%d;", userId);
 
     MySQL mysql;
     if(!mysql.connect()) return false;
